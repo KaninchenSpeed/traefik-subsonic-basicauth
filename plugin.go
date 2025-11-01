@@ -68,6 +68,9 @@ type Config struct {
 	// responses.
 	Header string `json:"header"`
 
+	// Cookie set when user is already authed
+	AuthCookie string `json:"auth-cookie"`
+
 	// Name of headers that clients can use to send BasicAuth credentials.
 	// Multiple headers can be specified separated by a comma.
 	//
@@ -145,7 +148,7 @@ func (mw *Middleware) serveHTTP(res subsonicResponseWriter, req *http.Request) {
 
 	var creds *credentials
 
-	if c, err := extractCredentials(req, strings.Split(mw.config.ClientHeaders, ",")); err != nil {
+	if c, err := extractCredentials(req, strings.Split(mw.config.ClientHeaders, ","), mw.config.AuthCookie); err != nil {
 		res.sendError(err)
 		return
 	} else {
@@ -176,7 +179,31 @@ func (c *credentials) ToBasicAuth() string {
 
 // Extracts and strips credentials from the request. If credentials are present
 // in several places, ensures that they are consistent.
-func extractCredentials(req *http.Request, basicAuthHeaders []string) (*credentials, *Error) {
+func extractCredentials(req *http.Request, basicAuthHeaders []string, authCookie string) (*credentials, *Error) {
+
+	// skip auth if user already authed
+	if authCookie != "" {
+		if _, err := req.Cookie(authCookie); err != nil {
+			if p, err := url.ParseQuery(req.URL.RawQuery); err != nil {
+				DEBUG.Printf("Error when parsing query: %s", err)
+				// return nil, &Error{0, "Invalid request"}
+			} else {
+				user := p.Get("u")
+
+				var query = req.URL.Query()
+				query.Del("u")
+				query.Del("p")
+				query.Del("t")
+				query.Del("s")
+
+				req.URL.RawQuery = query.Encode()
+
+				DEBUG.Printf("Skipped auth because of cookies")
+				return &credentials{user, ""}, nil
+			}
+		}
+	}
+
 	var credentials = make([]*credentials, 0)
 
 	if creds, err := extractSubsonicAuthQuery(req); err != nil {
