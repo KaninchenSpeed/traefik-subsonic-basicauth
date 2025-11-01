@@ -1,7 +1,7 @@
 displayName: BasicAuth adapter for Subsonic
 type: middleware
 
-import: github.com/crazygolem/traefik-subsonic-basicauth
+import: github.com/KaninchenSpeed/traefik-subsonic-basicauth
 
 summary: >
   Transforms Subsonic authentication parameters into a BasicAuth header, to be
