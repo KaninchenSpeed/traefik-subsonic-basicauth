@@ -95,7 +95,7 @@ it gets forwarded to the Subsonic server. To avoid HPP vulnerabilities, the list
 should contain at least all BasicAuth headers supported by your Subsonic server,
 unless you remove them using another middleware.
 
-**`auth-cookie`**
+**`cookie`**
 
 Optional, defaults to "" (disabled)
 
@@ -149,7 +149,7 @@ labels:
     traefik.http.middlewares.subsonicauth-sub2basic.plugin.subsonic-basicauth.auth: proxy
     traefik.http.middlewares.subsonicauth-sub2basic.plugin.subsonic-basicauth.header: Authorization
     traefik.http.middlewares.subsonicauth-cleanup.headers.customrequestheaders.Authorization: # empty removes the header
-    traefik.http.middlewares.subsonicauth-sub2basic.plugin.subsonic-basicauth.auth-cookie: cookiename # allows token auth if the client is already authed. Replace cookiename with the name of the cookie your forward-auth/oauth provider sets! (example: authentik_proxy_b5ab67ff)
+    traefik.http.middlewares.subsonicauth-sub2basic.plugin.subsonic-basicauth.cookie: cookiename # allows token auth if the client is already authed. Replace cookiename with the name of the cookie your forward-auth/oauth provider sets! (example: authentik_proxy_b5ab67ff)
 ```
 
 ```yaml
