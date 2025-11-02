@@ -69,7 +69,7 @@ type Config struct {
 	Header string `json:"header"`
 
 	// Cookie set when user is already authed
-	AuthCookie string `json:"auth-cookie"`
+	Cookie string `json:"cookie"`
 
 	// Name of headers that clients can use to send BasicAuth credentials.
 	// Multiple headers can be specified separated by a comma.
@@ -86,6 +86,7 @@ func CreateConfig() *Config {
 	return &Config{
 		Header:        "Authorization",
 		ClientHeaders: "Authorization",
+		Cookie:        "",
 		Debug:         false,
 	}
 }
@@ -101,6 +102,8 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		DEBUG.SetFlags(log.LstdFlags)
 		DEBUG.SetOutput(os.Stdout)
 	}
+
+	DEBUG.Printf("cookie set to %s", config.Cookie)
 
 	switch config.Auth {
 	case "backend", "proxy":
@@ -148,7 +151,7 @@ func (mw *Middleware) serveHTTP(res subsonicResponseWriter, req *http.Request) {
 
 	var creds *credentials
 
-	if c, err := extractCredentials(req, strings.Split(mw.config.ClientHeaders, ","), mw.config.AuthCookie); err != nil {
+	if c, err := extractCredentials(req, strings.Split(mw.config.ClientHeaders, ","), mw.config.Cookie); err != nil {
 		res.sendError(err)
 		return
 	} else {
@@ -183,7 +186,7 @@ func extractCredentials(req *http.Request, basicAuthHeaders []string, authCookie
 
 	// skip auth if user already authed
 	if authCookie != "" {
-		if _, err := req.Cookie(authCookie); err != nil {
+		if _, err := req.Cookie(authCookie); err == nil {
 			if p, err := url.ParseQuery(req.URL.RawQuery); err != nil {
 				DEBUG.Printf("Error when parsing query: %s", err)
 				// return nil, &Error{0, "Invalid request"}
